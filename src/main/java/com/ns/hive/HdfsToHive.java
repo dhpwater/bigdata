@@ -9,7 +9,7 @@ import org.apache.spark.sql.hive.HiveContext;
 
 /**
  * 
- * 验证将hdfs 上数据写入hive
+ * 将hdfs上数据 通过spark-job的方式 写入hive
  * 
  * @author ryan
  *

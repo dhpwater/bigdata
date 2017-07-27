@@ -65,6 +65,24 @@
 			<artifactId>spark-hive_2.10</artifactId>
 			<version>${CMH-spark.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.hbase</groupId>
+			<artifactId>hbase-client</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.nsfocus</groupId>
+			<artifactId>phoenix-client</artifactId>
+			<version>1.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.nsfocus</groupId>
+			<artifactId>phoenix-core</artifactId>
+			<version>1.0</version>
+		</dependency>
 
 	</dependencies>
 
