@@ -18,7 +18,7 @@ public class HdfsToHive {
 
 		HiveContext hc = new HiveContext(jsc.sc());
 
-		//要指定hdfs路径
+		///瑕佹寚瀹歨dfs璺緞
 		JavaRDD<String> lines = jsc.textFile("hdfs://cztcluster/user/edc_yz_safety/persons.txt");
 		
 		JavaRDD<Person> persons = lines.map(new Function<String, Person>() {
@@ -34,7 +34,7 @@ public class HdfsToHive {
 			}
 		});
 
-		//在底层通过反射的方式获得Person的所有fields，结合RDD本身，就生成了DataFrame
+		//鍦ㄥ簳灞傞�氳繃鍙嶅皠鐨勬柟寮忚幏寰桺erson鐨勬墍鏈塮ields锛岀粨鍚圧DD鏈韩锛屽氨鐢熸垚浜咲ataFrame
         DataFrame df = hc.createDataFrame(persons, Person.class);
 		
         df.registerTempTable("person_tmp");
