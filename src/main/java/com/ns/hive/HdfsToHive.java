@@ -7,6 +7,14 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.hive.HiveContext;
 
+/**
+ * 
+ * 验证将hdfs 上数据写入hive
+ * 
+ * @author ryan
+ *
+ */
+
 public class HdfsToHive {
 
 	public static void main(String[] args) {
