@@ -22,27 +22,20 @@ import com.ns.hive.Person;
 
 import scala.Tuple2;
 
-/**
- * 
- * 从kafka 接收数据，写入hive
- * @author ryan
- *
- */
-
 public class KafkaToHive {
 
 	public static void main(String[] args) {
 
 		SparkConf sparkConf = new SparkConf().setAppName("KafkaToHiveTest").set("spark.serializer",
 				"org.apache.spark.serializer.KryoSerializer");
-
+		
 		SparkContext sc = new SparkContext(sparkConf);
 		JavaSparkContext jsc = new JavaSparkContext(sc);
 		final HiveContext hc = new HiveContext(sc);
 		JavaStreamingContext jssc = new JavaStreamingContext(jsc, new Duration(10000));
 
 		// 接收数据的地址和端口
-		String zkQuorum = "10.48.183.169:2181";
+		String zkQuorum = "10.67.1.180:2181";
 
 		// 话题所在的组
 		String group = "bsa_test";
@@ -61,6 +54,9 @@ public class KafkaToHive {
 
 		JavaDStream<Person> lines = messages.map(new Function<Tuple2<String, String>, Person>() {
 			public Person call(Tuple2<String, String> tuple2) {
+				System.out.println("***********");
+				System.out.println(tuple2._1());
+				System.out.println("***********");
 				String [] str = tuple2._2().split(",");
 				Person p = new Person() ;
 				p.setId(Integer.parseInt(str[0]));
@@ -80,7 +76,7 @@ public class KafkaToHive {
 
 				String tempTableName = "person_tmp";
 
-				String sql = "insert into table yz_test.parquet_person select id , name , age from person_tmp";
+				String sql = "insert into table yz_test.parquet_person partition(id) select name , age  , id from person_tmp";
 
 				df.registerTempTable(tempTableName);
 
@@ -95,4 +91,3 @@ public class KafkaToHive {
 	}
 
 }
-
