@@ -18,24 +18,31 @@ import org.apache.spark.streaming.api.java.JavaPairReceiverInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka.KafkaUtils;
 
+import com.alibaba.fastjson.JSON;
 import com.ns.hive.Person;
 
 import scala.Tuple2;
 
+/**
+ * KafkaUtils.createStream 将数据从kafka 写入hive
+ * 
+ * @author ryan
+ *
+ */
 public class KafkaToHive {
 
 	public static void main(String[] args) {
 
-		SparkConf sparkConf = new SparkConf().setAppName("KafkaToHiveTest").set("spark.serializer",
+		SparkConf sparkConf = new SparkConf().setAppName("test").set("spark.serializer",
 				"org.apache.spark.serializer.KryoSerializer");
 		
 		SparkContext sc = new SparkContext(sparkConf);
 		JavaSparkContext jsc = new JavaSparkContext(sc);
 		final HiveContext hc = new HiveContext(sc);
-		JavaStreamingContext jssc = new JavaStreamingContext(jsc, new Duration(10000));
+		JavaStreamingContext jssc = new JavaStreamingContext(jsc, new Duration(60000));
 
 		// 接收数据的地址和端口
-		String zkQuorum = "10.67.1.180:2181";
+		String zkQuorum = "10.67.1.64:2181,10.67.1.63:2181";
 
 		// 话题所在的组
 		String group = "bsa_test";
@@ -49,19 +56,11 @@ public class KafkaToHive {
 		Map<String, Integer> topicmap = new HashMap<>();
 		topicmap.put(topics, numThreads);
 
-		JavaPairReceiverInputDStream<String, String> messages = KafkaUtils.createStream(jssc, zkQuorum, group,
-				topicmap);
+		JavaPairReceiverInputDStream<String, String> messages = KafkaUtils.createStream(jssc, zkQuorum, group,topicmap);
 
 		JavaDStream<Person> lines = messages.map(new Function<Tuple2<String, String>, Person>() {
 			public Person call(Tuple2<String, String> tuple2) {
-				System.out.println("***********");
-				System.out.println(tuple2._1());
-				System.out.println("***********");
-				String [] str = tuple2._2().split(",");
-				Person p = new Person() ;
-				p.setId(Integer.parseInt(str[0]));
-				p.setName(str[1]);
-				p.setAge(Integer.parseInt(str[2]));
+				Person p = JSON.parseObject(tuple2._2(), Person.class);
 				return p ;
 			}
 		});
@@ -71,12 +70,11 @@ public class KafkaToHive {
 			@Override
 			public void call(JavaRDD<Person> rdd) throws Exception {
 				// TODO Auto-generated method stub
-
 				DataFrame df = hc.createDataFrame(rdd, Person.class);
 
 				String tempTableName = "person_tmp";
 
-				String sql = "insert into table yz_test.parquet_person partition(id) select name , age  , id from person_tmp";
+				String sql = "insert into table yz_test.parquet_person partition(id) select name , age , id from person_tmp";
 
 				df.registerTempTable(tempTableName);
 
@@ -91,3 +89,5 @@ public class KafkaToHive {
 	}
 
 }
+
+
