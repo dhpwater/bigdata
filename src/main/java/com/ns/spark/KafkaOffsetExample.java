@@ -1,7 +1,9 @@
 package com.ns.spark;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,6 +17,9 @@ import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.hive.HiveContext;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaInputDStream;
@@ -42,25 +47,27 @@ public class KafkaOffsetExample {
 
 	private static Broadcast<HashMap<String, String>> kafkaParamBroadcast = null;
 
-	private static scala.collection.immutable.Set<String> immutableTopics = null;
+//	private static scala.collection.immutable.Set<String> immutableTopics = null;
 
 	public static void main(String[] args) {
 
 		SparkConf sparkConf = new SparkConf().setAppName("test");
+		sparkConf.set("spark.streaming.kafka.maxRatePerPartition", "100") ;
 		
 		SparkContext sc = new SparkContext(sparkConf);
 		JavaSparkContext jsc = new JavaSparkContext(sc);
 		final HiveContext hc = new HiveContext(sc);
+		hc.setConf("parquet.memory.min.chunk.size", String.valueOf((1024 * 32)));
 		
-		// Create a StreamingContext with a 1 second batch size
+		// Create a StreamingContext with a 60 second batch size
 		JavaStreamingContext jssc = new JavaStreamingContext(jsc, new Duration(60000));
 		
         kafkaParamBroadcast = jssc.sparkContext().broadcast(kafkaParam);
         
 		Set<String> topicSet = new HashSet<String>();
-		topicSet.add("person_top");
+		topicSet.add("topic3");
 
-		kafkaParam.put("metadata.broker.list", "10.67.1.182:9092");
+		kafkaParam.put("metadata.broker.list", "10.67.1.181:9092");
 		kafkaParam.put("group.id", "kafka.test");
 
 		// transform java Map to scala immutable.map
@@ -75,11 +82,15 @@ public class KafkaOffsetExample {
 		// init KafkaCluster
 		kafkaCluster = new KafkaCluster(scalaKafkaParam);
 
+		System.out.println("topicSet:"+topicSet);
 		scala.collection.mutable.Set<String> mutableTopics = JavaConversions.asScalaSet(topicSet);
-		immutableTopics = mutableTopics.toSet();
-		scala.collection.immutable.Set<TopicAndPartition> topicAndPartitionSet2 = kafkaCluster
-				.getPartitions(immutableTopics).right().get();
+		scala.collection.immutable.Set<String> immutableTopics = mutableTopics.toSet();
+		System.out.println("immutableTopics:"+immutableTopics);
+		System.out.println(kafkaCluster.getPartitionMetadata(immutableTopics));
+//		scala.collection.immutable.Set<TopicAndPartition> topicAndPartitionSet2 = kafkaCluster.getPartitions(immutableTopics).right().get();
+		scala.collection.immutable.Set<TopicAndPartition> topicAndPartitionSet2 = (scala.collection.immutable.Set<TopicAndPartition>) kafkaCluster.getPartitions(immutableTopics).right().get();
 
+		
 		// kafka direct stream 初始化时使用的offset数据
 		Map<TopicAndPartition, Long> consumerOffsetsLong = new HashMap<TopicAndPartition, Long>();
 
@@ -150,6 +161,11 @@ public class KafkaOffsetExample {
 			}
 		});
         
+    	List<StructField> fields = new ArrayList<StructField>();
+    	fields.add(DataTypes.createStructField("id", DataTypes.LongType, true));
+    	fields.add(DataTypes.createStructField("name", DataTypes.StringType, true));
+    	fields.add(DataTypes.createStructField("age", DataTypes.IntegerType, true));
+    	final StructType schema = DataTypes.createStructType(fields);
         
         javaDStreamPerson.foreachRDD(new VoidFunction<JavaRDD<Person>>() {
 
@@ -159,9 +175,11 @@ public class KafkaOffsetExample {
 				// 数据入hive
 				DataFrame df = hc.createDataFrame(rdd, Person.class);
 				String tempTableName = "person_tmp";
-				String sql = "insert into table yz_test.parquet_person partition(id) select name , age , id from person_tmp";
+				String sql = "insert into table parquet_person_001  select id , name , age  from person_tmp";
 				df.registerTempTable(tempTableName);
 				hc.sql(sql);
+				
+			
 				
 				//Update Topic Offset
 				for (OffsetRange offsetRange : offsetRanges.get()) {

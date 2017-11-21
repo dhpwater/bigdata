@@ -1,5 +1,6 @@
 package com.ns.io;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
@@ -23,12 +24,11 @@ public class NIOClient {
 	public static void main(String[] args) throws IOException, InterruptedException {
 	    SocketChannel socketChannel = SocketChannel.open();
 	    
-	    InetSocketAddress address = new InetSocketAddress("10.67.1.182",8080);
+	    InetSocketAddress address = new InetSocketAddress("127.0.0.1",8888);
 	    
 	    socketChannel.connect(address);
 	    
-	    RandomAccessFile file = new RandomAccessFile(
-	        NIOClient.class.getClassLoader().getResource("test.txt").getFile(), "rw");
+	    RandomAccessFile file = new RandomAccessFile(new File("README.md"),"rw");
 	    
 	    FileChannel channel = file.getChannel();
 	    

@@ -39,18 +39,19 @@ public class KafkaToHive {
 		SparkContext sc = new SparkContext(sparkConf);
 		JavaSparkContext jsc = new JavaSparkContext(sc);
 		final HiveContext hc = new HiveContext(sc);
-		JavaStreamingContext jssc = new JavaStreamingContext(jsc, new Duration(60000));
+		hc.setConf("parquet.memory.min.chunk.size", String.valueOf((1024 * 32)));
+		JavaStreamingContext jssc = new JavaStreamingContext(jsc, new Duration(6000));
 
 		// 接收数据的地址和端口
-		String zkQuorum = "10.67.1.64:2181,10.67.1.63:2181";
+		String zkQuorum = "10.67.1.181:2181";
 
 		// 话题所在的组
 		String group = "bsa_test";
 
-		String topics = "person_top";
+		String topics = "topic3";
 
 		// 每个话题的分片数
-		int numThreads = 2;
+		int numThreads = 4;
 
 		// 存放话题跟分片的映射关系
 		Map<String, Integer> topicmap = new HashMap<>();
@@ -64,6 +65,7 @@ public class KafkaToHive {
 				return p ;
 			}
 		});
+		
 
 		lines.foreachRDD(new VoidFunction<JavaRDD<Person>>() {
 
@@ -74,7 +76,7 @@ public class KafkaToHive {
 
 				String tempTableName = "person_tmp";
 
-				String sql = "insert into table yz_test.parquet_person partition(id) select name , age , id from person_tmp";
+				String sql = "insert into table parquet_person partition(id) select name , age , id from person_tmp";
 
 				df.registerTempTable(tempTableName);
 

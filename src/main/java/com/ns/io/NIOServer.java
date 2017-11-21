@@ -32,7 +32,7 @@ public class NIOServer {
 		Selector selector = Selector.open();
 		ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
 		serverSocketChannel.configureBlocking(false);
-		serverSocketChannel.bind(new InetSocketAddress(1234));
+		serverSocketChannel.bind(new InetSocketAddress(8888));
 		serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 		while (selector.select() > 0) {
 			Set<SelectionKey> keys = selector.selectedKeys();
@@ -56,6 +56,7 @@ public class NIOServer {
 						logger.info("Received invalide data, close the connection");
 						continue;
 					}
+					System.out.println(new String(buffer.array()));
 					logger.info("Received message {}", new String(buffer.array()));
 				}
 				keys.remove(key);

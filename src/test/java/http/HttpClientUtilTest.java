@@ -18,11 +18,11 @@ public class HttpClientUtilTest {
 //	@Test
 	public void testSendHttpsGet() {
 		String responseContent = HttpClientUtil.getInstance()
-				 .sendHttpsGet("https://www.baidu.com");  
+				 .sendHttpsGet("https://10.67.1.181/user/backupLogin?username=enlhaXNuU3FjcA==&password=THFkMGFzcSFAIw==&returl=/bcm#/");  
 		System.out.println("reponse content:" + responseContent);
 	}
 	
-	@Test
+//	@Test
 	public void testSendHttpPost(){
 		String param  = HttpClientUtil.getInstance()  
                 .sendHttpGet("http://10.67.1.64:8080/bcm/clusterInfo/get/1502330525480");  
